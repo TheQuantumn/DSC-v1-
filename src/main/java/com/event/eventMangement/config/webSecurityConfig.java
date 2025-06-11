@@ -24,6 +24,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.security.KeyPair;
@@ -43,6 +45,15 @@ public class webSecurityConfig {
     @Autowired
     private CustomUserDetailService userDetailService;
 
+    JwtAuthenticationConverter jwtAuthenticationConverter(){
+        JwtGrantedAuthoritiesConverter jwtAuth = new JwtGrantedAuthoritiesConverter();
+        jwtAuth.setAuthoritiesClaimName("roles");
+        jwtAuth.setAuthorityPrefix("");
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtAuth);
+        return jwtAuthenticationConverter;
+    }
+
     // This method sets up how security should work in your app
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -57,7 +68,7 @@ public class webSecurityConfig {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/login","/register").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                         .anyRequest().authenticated())
 
                 // Set session policy to STATELESS: no server-side sessions will be created (good for token-based auth)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -65,7 +76,7 @@ public class webSecurityConfig {
 
                 // Enables HTTP Basic Auth (sends username/password with every request in the header)
                 .httpBasic(Customizer.withDefaults())
-                .oauth2ResourceServer(oauth->oauth.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer(oauth->oauth.jwt(customizer->customizer.jwtAuthenticationConverter((jwtAuthenticationConverter()))))
 
                 // Finally, build the filter chain
                 .build();

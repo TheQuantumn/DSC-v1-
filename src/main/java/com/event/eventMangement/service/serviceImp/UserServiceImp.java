@@ -8,6 +8,8 @@ import org.springframework.data.annotation.AccessType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+
 @Service
 public class UserServiceImp implements UserService {
     @Autowired
@@ -20,6 +22,7 @@ public class UserServiceImp implements UserService {
         if(userRepo.existsByEmail(u.getEmail())){
             throw new RuntimeException("User Already Exists");
         }
+        u.setRoles(Arrays.asList("ADMIN"));
         u.setPass(passwordEncoder.encode(u.getPass()));
            return userRepo.save(u);
 
